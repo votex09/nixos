@@ -11,7 +11,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 REPO_URL="https://github.com/votex09/nixos.git"
-NIXOS_CONFIG_DIR="/home/nixos" # The directory where the repo will be cloned.
+NIXOS_CONFIG_DIR="/home/nixosV" # The directory where the repo will be cloned.
 
 echo "--- Backing up existing configuration directory (if any) ---"
 if [ -d "${NIXOS_CONFIG_DIR}" ]; then
@@ -32,7 +32,7 @@ fi
 
 echo "--- Creating new main configuration file ---"
 if [ -f "/etc/nixos/configuration.nix" ]; then
-    mv /etc/nixos/configuration.nix /etc/nixos/configuration.nix.backup
+    mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
 fi
 
 cat > /etc/nixos/configuration.nix <<EOF

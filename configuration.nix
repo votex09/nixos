@@ -1,4 +1,4 @@
-# /home/nixos/configuration.nix
+# /home/nixosV/configuration.nix
 #
 # This is the main NixOS configuration file.
 # It imports other modules to keep things organized.

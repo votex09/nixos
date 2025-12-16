@@ -1,4 +1,4 @@
-# /home/nixos/system/users.nix
+# /home/nixosV/system/users.nix
 #
 # This file manages user accounts.
 

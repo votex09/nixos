@@ -1,4 +1,4 @@
-# /home/nixos/system/packages.nix
+# /home/nixosV/system/packages.nix
 #
 # This file lists the packages to be installed system-wide.
 
@@ -11,6 +11,7 @@
     git
     wget
     curl
+    git
 
     # --- Add your desired packages here ---
     firefox

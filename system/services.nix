@@ -1,4 +1,4 @@
-# /home/nixos/system/services.nix
+# /home/nixosV/system/services.nix
 #
 # This file is for enabling and configuring system services.
 

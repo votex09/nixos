@@ -10,8 +10,8 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-NIXOS_CONFIG_DIR="/home/nixos"
-ETC_CONFIG_BACKUP="/etc/nixos/configuration.nix.backup"
+NIXOS_CONFIG_DIR="/home/nixosV"
+ETC_CONFIG_BACKUP="${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
 
 echo "--- Starting uninstallation process ---"
 

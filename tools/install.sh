@@ -45,6 +45,15 @@ else
     echo "Warning: /etc/nixos/hardware-configuration.nix not found. A placeholder will be used."
 fi
 
+echo "--- Creating user settings file from template ---"
+if [ -f "${NIXOS_CONFIG_DIR}/system/settings.nix.template" ]; then
+    cp "${NIXOS_CONFIG_DIR}/system/settings.nix.template" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+    echo "Settings file created from template"
+else
+    echo "Warning: settings.nix.template not found"
+    exit 1
+fi
+
 echo "--- Creating new main configuration file ---"
 if [ -f "/etc/nixos/configuration.nix" ]; then
     mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"

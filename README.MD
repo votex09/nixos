@@ -18,7 +18,7 @@ This repository contains a complete, modular, and easily deployable NixOS config
 To deploy this configuration on a fresh NixOS installation, run the following command in your terminal. The script requires `sudo` privileges and will prompt for your password.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh)
+sudo bash <(curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh)
 ```
 
 ### How It Works
@@ -70,7 +70,7 @@ git push
 If you wish to revert your system to the state it was in before running the installer, you can use the `uninstall.sh` script. It will restore the original NixOS configuration and remove the cloned repository.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/uninstall.sh)
+sudo bash <(curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/uninstall.sh)
 ```
 
 The uninstaller will automatically rebuild the system with the old configuration, effectively undoing all changes.

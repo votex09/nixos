@@ -20,7 +20,7 @@ in
   services.printing.enable = true;
 
   # Enable sound with PipeWire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -32,8 +32,8 @@ in
   # --- Desktop Environment ---
   # Enable the desktop environment specified in settings.nix.
   # GDM (for GNOME) and SDDM (for KDE) will default to a Wayland session.
-  services.xserver.displayManager.gdm.enable = (settings.desktop == "gnome");
-  services.xserver.desktopManager.gnome.enable = (settings.desktop == "gnome");
+  services.displayManager.gdm.enable = (settings.desktop == "gnome");
+  services.desktopManager.gnome.enable = (settings.desktop == "gnome");
 
   # Exclude some GNOME apps to reduce bloat
   environment.gnome.excludePackages = (if settings.desktop == "gnome" then (with pkgs; [
@@ -67,8 +67,8 @@ in
   services.displayManager.sddm.enable = (settings.desktop == "kde");
   services.desktopManager.plasma6.enable = (settings.desktop == "kde");
 
-  services.xserver.displayManager.lightdm.enable = (settings.desktop == "xfce");
-  services.xserver.desktopManager.xfce.enable = (settings.desktop == "xfce");
+  services.displayManager.lightdm.enable = (settings.desktop == "xfce");
+  services.desktopManager.xfce.enable = (settings.desktop == "xfce");
 
   # Enable dbus (required for display managers)
   services.dbus.enable = true;

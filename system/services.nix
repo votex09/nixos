@@ -11,7 +11,10 @@ in
   # Enable the graphical session.
   # This enables the X server, which is required for XWayland compatibility
   # to run X11 applications on Wayland.
-  services.xserver.enable = true; 
+  services.xserver.enable = true;
+
+  # Enable NetworkManager for network connectivity
+  networking.networkmanager.enable = true;
 
   # Enable the CUPS printing system.
   services.printing.enable = true;

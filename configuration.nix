@@ -28,8 +28,14 @@ in
   time.timeZone = settings.timezone;
   i18n.defaultLocale = settings.locale;
 
-  # Boot loader configuration is handled by hardware-configuration.nix
-  # which is auto-generated during NixOS installation and copied by the install script.
+  # Boot loader configuration
+  # Use systemd-boot for UEFI systems (most modern hardware)
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # For BIOS/Legacy systems, comment out the above and uncomment below:
+  # boot.loader.grub.enable = true;
+  # boot.loader.grub.device = "/dev/sda"; # Change to your disk
 
   # System-wide state version.
   system.stateVersion = "25.11";

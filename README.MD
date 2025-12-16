@@ -15,17 +15,17 @@ This repository contains a complete, modular, and easily deployable NixOS config
 
 ## Installation
 
-To deploy this configuration on a fresh NixOS installation, run the following command in your terminal. The script requires `sudo` privileges and will prompt for your password.
+To deploy this configuration on a fresh NixOS installation, run the following command in your terminal. The launcher will prompt for your username and password, then install the system.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | sudo bash
+bash <(curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install-launcher.sh)
 ```
 
 Alternatively, you can download and run it explicitly:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh -o /tmp/install.sh
-sudo bash /tmp/install.sh
+curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install-launcher.sh -o /tmp/install-launcher.sh
+bash /tmp/install-launcher.sh
 ```
 
 ### How It Works

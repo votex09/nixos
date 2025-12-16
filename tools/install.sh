@@ -5,13 +5,14 @@
 
 set -euo pipefail
 
-# Redirect stdin to the terminal to allow interactive prompts
-exec < /dev/tty
-
 if [ "$EUID" -ne 0 ]; then
   echo "Please run this script with sudo."
   exit 1
 fi
+
+# Accept username and password as arguments (passed from launcher script)
+USERNAME="${1:-}"
+PASSWORD="${2:-}"
 
 # Check if git is available, if not install it temporarily
 if ! command -v git &> /dev/null; then
@@ -48,35 +49,23 @@ if [ -f "/etc/nixos/configuration.nix" ]; then
 fi
 
 echo "--- Setting up user account ---"
-# Get the default username from settings.nix
-DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
 
-echo "Please configure your user account."
-echo ""
-read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME
-# Remove any whitespace and use default if empty
-USERNAME=$(echo "${USERNAME:-$DEFAULT_USERNAME}" | tr -d '[:space:]')
-
-# Validate username format (lowercase letters, numbers, underscore, dash only)
-if ! echo "$USERNAME" | grep -qE '^[a-z_][a-z0-9_-]*$'; then
-    echo "Error: Invalid username format. Username must start with a lowercase letter or underscore,"
-    echo "and can only contain lowercase letters, numbers, underscores, and hyphens."
-    exit 1
+# If credentials weren't passed as arguments, use defaults
+if [ -z "$USERNAME" ]; then
+    DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
+    USERNAME="$DEFAULT_USERNAME"
 fi
 
-# Update settings.nix with the chosen username if it's different
+echo "Creating user account: ${USERNAME}"
+
+# Update settings.nix with the username
+DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
 if [ "$USERNAME" != "$DEFAULT_USERNAME" ]; then
     sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
     echo "Updated username in settings.nix to: ${USERNAME}"
 fi
 
-echo "Using username: ${USERNAME}"
-
-echo ""
-echo "Now set a password for user: ${USERNAME}"
-echo "This ensures you can log in after the system rebuilds."
-
-# Create the user temporarily if it doesn't exist yet, so we can set the password
+# Create the user temporarily if it doesn't exist yet
 if ! id "${USERNAME}" &>/dev/null; then
     echo "Creating temporary user account..."
     useradd -m -s /bin/bash "${USERNAME}" || {
@@ -86,17 +75,17 @@ if ! id "${USERNAME}" &>/dev/null; then
 fi
 
 # Set the password
-echo ""
-while true; do
-    if passwd "${USERNAME}"; then
-        echo "Password set successfully!"
-        break
-    else
-        echo ""
-        echo "Failed to set password. Please try again."
-        echo ""
-    fi
-done
+if [ -n "$PASSWORD" ]; then
+    echo "Setting password for ${USERNAME}..."
+    echo "${USERNAME}:${PASSWORD}" | chpasswd || {
+        echo "Error: Failed to set password"
+        exit 1
+    }
+    echo "Password set successfully!"
+else
+    echo "Error: No password provided"
+    exit 1
+fi
 
 echo ""
 echo "--- Creating new main configuration file ---"

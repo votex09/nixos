@@ -44,6 +44,19 @@ in
 
   # Configure GNOME theme settings
   programs.dconf.enable = true;
+
+  # Set default dconf settings for all users
+  programs.dconf.profiles.user.databases = [{
+    settings = {
+      "org/gnome/desktop/interface" = {
+        gtk-theme = "catppuccin-mocha-mauve-standard+default";
+        icon-theme = "Papirus-Dark";
+        cursor-theme = "catppuccin-mocha-dark-cursors";
+        cursor-size = 24;
+      };
+    };
+  }];
+
   environment.sessionVariables = {
     XCURSOR_THEME = "catppuccin-mocha-dark-cursors";
     XCURSOR_SIZE = "24";

@@ -132,5 +132,7 @@ echo ""
 nixos-rebuild switch
 
 # After nixos-rebuild switch, the display manager has changed and screen is black
-# Reboot immediately without any messages (they won't be visible anyway)
-systemctl reboot
+# Reboot immediately using multiple methods to ensure it works
+sync
+sleep 1
+reboot -f || systemctl reboot || /run/current-system/sw/bin/reboot

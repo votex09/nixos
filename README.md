@@ -4,16 +4,20 @@ A simple, modular NixOS configuration with GNOME desktop environment.
 
 ## Quick Install
 
-Run this one-liner to install:
+Download and run the installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
 ```
 
 Or with wget:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | bash
+wget https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh
+chmod +x install.sh
+./install.sh
 ```
 
 ## What It Does

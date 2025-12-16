@@ -34,10 +34,19 @@ in
   # GDM (for GNOME) and SDDM (for KDE) will default to a Wayland session.
   services.xserver.displayManager.gdm.enable = (settings.desktop == "gnome");
   services.xserver.desktopManager.gnome.enable = (settings.desktop == "gnome");
+  # Exclude some GNOME apps to reduce bloat
+  environment.gnome.excludePackages = (if settings.desktop == "gnome" then (with pkgs; [
+    gnome-tour
+    epiphany # web browser
+    geary # email client
+  ]) else []);
 
   services.displayManager.sddm.enable = (settings.desktop == "kde");
   services.desktopManager.plasma6.enable = (settings.desktop == "kde");
 
   services.xserver.displayManager.lightdm.enable = (settings.desktop == "xfce");
   services.xserver.desktopManager.xfce.enable = (settings.desktop == "xfce");
+
+  # Enable dbus (required for display managers)
+  services.dbus.enable = true;
 }

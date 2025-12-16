@@ -15,8 +15,14 @@
         # Default configuration - users can override the hostname
         nixos-desktop = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit inputs; };
           modules = [
             ./configuration.nix
+            # Provide defaults for gitignored files if they don't exist
+            ({ config, lib, ... }: {
+              # This ensures the config can be evaluated even if settings.nix doesn't exist yet
+              options = {};
+            })
           ];
         };
       };

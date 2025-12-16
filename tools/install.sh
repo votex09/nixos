@@ -125,22 +125,12 @@ cat > /etc/nixos/configuration.nix <<EOF
 EOF
 
 echo "--- Applying the new NixOS configuration ---"
+echo "Note: The screen may go black when the display manager switches."
+echo "The system will automatically reboot after the configuration is applied."
+echo ""
+
 nixos-rebuild switch
 
-echo ""
-echo "--- Installation complete! ---"
-echo "Your system is now managed by the configuration from your GitHub repository."
-echo ""
-echo "The system will reboot in 5 seconds..."
-echo "After reboot, log in with username: ${USERNAME}"
-echo ""
-echo "Press Ctrl+C to cancel automatic reboot."
-
-# Flush output before reboot
-sync
-
-sleep 5
-
-echo "Rebooting now..."
-# Use systemctl reboot which works better in piped scripts
-exec systemctl reboot
+# After nixos-rebuild switch, the display manager has changed and screen is black
+# Reboot immediately without any messages (they won't be visible anyway)
+systemctl reboot

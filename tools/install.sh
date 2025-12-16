@@ -50,7 +50,7 @@ DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" 
 
 echo "Please configure your user account."
 echo ""
-read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME
+read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME </dev/tty
 # Remove any whitespace and use default if empty
 USERNAME=$(echo "${USERNAME:-$DEFAULT_USERNAME}" | tr -d '[:space:]')
 
@@ -85,7 +85,7 @@ fi
 # Set the password
 echo ""
 while true; do
-    if passwd "${USERNAME}"; then
+    if passwd "${USERNAME}" </dev/tty; then
         echo "Password set successfully!"
         break
     else

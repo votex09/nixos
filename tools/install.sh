@@ -54,6 +54,12 @@ else
     exit 1
 fi
 
+echo "--- Enabling experimental flakes feature ---"
+mkdir -p /etc/nix
+cat > /etc/nix/nix.conf <<EOF
+experimental-features = nix-command flakes
+EOF
+
 echo "--- Creating new main configuration file ---"
 if [ -f "/etc/nixos/configuration.nix" ]; then
     mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
@@ -138,7 +144,8 @@ echo "Note: The screen may go black when the display manager switches."
 echo "The system will automatically reboot after the configuration is applied."
 echo ""
 
-nixos-rebuild switch
+# Use flakes for nixos-rebuild
+nixos-rebuild switch --flake "${NIXOS_CONFIG_DIR}#nixos-desktop"
 
 # After nixos-rebuild switch, the display manager has changed and screen is black
 # Reboot immediately

@@ -4,6 +4,9 @@ system/hardware-configuration.nix
 # User settings are machine-specific and should not be committed
 system/settings.nix
 
+# Flake lock file - generated locally
+flake.lock
+
 # Backup files
 tools/backup/
 *.backup

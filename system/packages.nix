@@ -70,7 +70,7 @@
 
       echo ""
       echo "--- Rebuilding system with updated configuration ---"
-      nixos-rebuild switch
+      nixos-rebuild switch --flake "$NIXOS_CONFIG_DIR#nixos-desktop"
 
       echo ""
       echo "--- Update complete! ---"

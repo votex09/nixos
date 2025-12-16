@@ -46,12 +46,20 @@ fi
 
 echo "--- Setting up user account ---"
 # Get the default username from settings.nix
-DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/')
+DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
 
 echo "Please configure your user account."
 echo ""
 read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME
-USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+# Remove any whitespace and use default if empty
+USERNAME=$(echo "${USERNAME:-$DEFAULT_USERNAME}" | tr -d '[:space:]')
+
+# Validate username format (lowercase letters, numbers, underscore, dash only)
+if ! echo "$USERNAME" | grep -qE '^[a-z_][a-z0-9_-]*$'; then
+    echo "Error: Invalid username format. Username must start with a lowercase letter or underscore,"
+    echo "and can only contain lowercase letters, numbers, underscores, and hyphens."
+    exit 1
+fi
 
 # Update settings.nix with the chosen username if it's different
 if [ "$USERNAME" != "$DEFAULT_USERNAME" ]; then
@@ -59,21 +67,32 @@ if [ "$USERNAME" != "$DEFAULT_USERNAME" ]; then
     echo "Updated username in settings.nix to: ${USERNAME}"
 fi
 
+echo "Using username: ${USERNAME}"
+
 echo ""
 echo "Now set a password for user: ${USERNAME}"
 echo "This ensures you can log in after the system rebuilds."
 
 # Create the user temporarily if it doesn't exist yet, so we can set the password
 if ! id "${USERNAME}" &>/dev/null; then
-    useradd -m "${USERNAME}" 2>/dev/null || true
+    echo "Creating temporary user account..."
+    useradd -m -s /bin/bash "${USERNAME}" || {
+        echo "Error: Failed to create user ${USERNAME}"
+        exit 1
+    }
 fi
 
-# Loop until passwords match
+# Set the password
+echo ""
 while true; do
-    passwd "${USERNAME}" && break
-    echo ""
-    echo "Failed to set password. Please try again."
-    echo ""
+    if passwd "${USERNAME}"; then
+        echo "Password set successfully!"
+        break
+    else
+        echo ""
+        echo "Failed to set password. Please try again."
+        echo ""
+    fi
 done
 
 echo ""

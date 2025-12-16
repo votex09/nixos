@@ -59,6 +59,16 @@ git commit -m "feat: add my new package"
 git push
 ```
 
+## Updating
+
+To update your system with the latest changes from the GitHub repository, simply run:
+
+```bash
+update
+```
+
+The command will automatically elevate to sudo when needed, pull the latest configuration from GitHub, and rebuild your system.
+
 ---
 
 ## Uninstallation

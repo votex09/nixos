@@ -5,15 +5,20 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: {
-    nixosConfigurations = {
-      default = nixpkgs.lib.nixosSystem {
+  outputs = { self, nixpkgs }:
+    let
+      mkHost = hostname: nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
-          # Your system configuration
-          /nix/VnixOS/configuration.nix
+          ./hosts/${hostname}/configuration.nix
         ];
       };
+
+      # Auto-discover all host directories
+      hostDirs = builtins.attrNames (builtins.readDir ./hosts);
+    in {
+      nixosConfigurations = builtins.listToAttrs (
+        map (host: { name = host; value = mkHost host; }) hostDirs
+      );
     };
-  };
 }

@@ -150,19 +150,50 @@ print_info "Cloning repository to $CONFIG_DIR"
 git clone "$REPO_URL" "$CONFIG_DIR"
 print_success "Repository cloned"
 
-# Create system and applications directories if they don't exist
-if [ ! -d "$CONFIG_DIR/system" ]; then
-    mkdir -p "$CONFIG_DIR/system"
-fi
+# Create host-specific directories
+print_info "Creating host configuration directory..."
+mkdir -p "$CONFIG_DIR/hosts/$HOSTNAME"
+mkdir -p "$CONFIG_DIR/applications"
+print_success "Directory structure created"
 
-if [ ! -d "$CONFIG_DIR/applications" ]; then
-    mkdir -p "$CONFIG_DIR/applications"
+# Generate flake.nix only on first install
+if [ ! -f "$CONFIG_DIR/flake.nix" ]; then
+    print_info "Generating flake.nix..."
+    cat > "$CONFIG_DIR/flake.nix" << 'EOF'
+{
+  description = "NixOS configuration";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  };
+
+  outputs = { self, nixpkgs }:
+    let
+      mkHost = hostname: nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/${hostname}/configuration.nix
+        ];
+      };
+
+      # Auto-discover all host directories
+      hostDirs = builtins.attrNames (builtins.readDir ./hosts);
+    in {
+      nixosConfigurations = builtins.listToAttrs (
+        map (host: { name = host; value = mkHost host; }) hostDirs
+      );
+    };
+}
+EOF
+    print_success "Flake configuration generated"
+else
+    print_info "flake.nix already exists, skipping generation (multi-host setup)"
 fi
 
 # Generate hardware-configuration.nix
 print_info "Generating hardware-configuration.nix for this system..."
-sudo nixos-generate-config --show-hardware-config > "$CONFIG_DIR/system/hardware-configuration.nix"
-print_success "Hardware configuration generated at $CONFIG_DIR/system/hardware-configuration.nix"
+sudo nixos-generate-config --show-hardware-config > "$CONFIG_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+print_success "Hardware configuration generated"
 
 # Generate configuration.nix with user values
 print_info "Generating configuration.nix with user-specific values..."
@@ -175,16 +206,16 @@ if [ "$AUTOLOGIN" = "y" ]; then
   services.xserver.displayManager.autoLogin.user = \"$USERNAME\";"
 fi
 
-cat > "$CONFIG_DIR/configuration.nix" << EOF
+cat > "$CONFIG_DIR/hosts/$HOSTNAME/configuration.nix" << EOF
 { config, pkgs, ... }:
 
 {
   imports = [
     # Include the results of the hardware scan
-    ./system/hardware-configuration.nix
+    ./hardware-configuration.nix
     # Application configurations
-    ./applications/core.nix
-    ./applications/user.nix
+    ../../applications/core.nix
+    ../../applications/user.nix
   ];
 
   # Bootloader
@@ -246,7 +277,7 @@ ${AUTOLOGIN_CONFIG}
 }
 EOF
 
-print_success "Configuration generated at $CONFIG_DIR/configuration.nix"
+print_success "Configuration generated at $CONFIG_DIR/hosts/$HOSTNAME/configuration.nix"
 
 # Test the flake configuration
 print_info "Testing flake configuration..."

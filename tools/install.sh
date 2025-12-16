@@ -44,6 +44,40 @@ if [ -f "/etc/nixos/configuration.nix" ]; then
     mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
 fi
 
+echo "--- Setting up user account ---"
+# Get the default username from settings.nix
+DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/')
+
+echo "Please configure your user account."
+echo ""
+read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME
+USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+
+# Update settings.nix with the chosen username if it's different
+if [ "$USERNAME" != "$DEFAULT_USERNAME" ]; then
+    sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+    echo "Updated username in settings.nix to: ${USERNAME}"
+fi
+
+echo ""
+echo "Now set a password for user: ${USERNAME}"
+echo "This ensures you can log in after the system rebuilds."
+
+# Create the user temporarily if it doesn't exist yet, so we can set the password
+if ! id "${USERNAME}" &>/dev/null; then
+    useradd -m "${USERNAME}" 2>/dev/null || true
+fi
+
+# Loop until passwords match
+while true; do
+    passwd "${USERNAME}" && break
+    echo ""
+    echo "Failed to set password. Please try again."
+    echo ""
+done
+
+echo ""
+echo "--- Creating new main configuration file ---"
 cat > /etc/nixos/configuration.nix <<EOF
 # This file points to the real configuration in your home directory.
 {
@@ -54,5 +88,7 @@ EOF
 echo "--- Applying the new NixOS configuration ---"
 nixos-rebuild switch
 
+echo ""
 echo "--- Installation complete! ---"
 echo "Your system is now managed by the configuration from your GitHub repository."
+echo "You can now reboot and log in with username: ${USERNAME}"

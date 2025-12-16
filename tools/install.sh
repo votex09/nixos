@@ -10,6 +10,12 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# Check if git is available, if not install it temporarily
+if ! command -v git &> /dev/null; then
+    echo "--- Git not found, installing temporarily ---"
+    nix-env -iA nixos.git
+fi
+
 REPO_URL="https://github.com/votex09/nixos.git"
 NIXOS_CONFIG_DIR="/home/nixosV" # The directory where the repo will be cloned.
 

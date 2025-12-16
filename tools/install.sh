@@ -104,7 +104,7 @@ echo ""
 print_info "Starting installation..."
 
 # Fixed installation directory
-CONFIG_DIR="/home/.VnixOS"
+CONFIG_DIR="/nix/VnixOS"
 NIXOS_CONFIG_DIR="/etc/nixos"
 REPO_URL="https://github.com/votex09/nixos.git"  # Update this to your actual repo URL
 
@@ -132,16 +132,22 @@ fi
 
 # Check if already installed
 if [ -d "$CONFIG_DIR" ]; then
-    print_error "VnixOS appears to be already installed at $CONFIG_DIR"
+    print_error "NixOS configuration appears to be already installed at $CONFIG_DIR"
     print_error "This installer is designed for fresh systems only."
-    print_info "If you want to reinstall, manually remove $CONFIG_DIR first."
+    print_info "If you want to reinstall, manually remove $CONFIG_DIR first (sudo rm -rf $CONFIG_DIR)."
     exit 1
 fi
+
+# Create the directory with proper permissions
+print_info "Creating configuration directory..."
+sudo mkdir -p "$CONFIG_DIR"
+sudo chown root:wheel "$CONFIG_DIR"
+sudo chmod 775 "$CONFIG_DIR"
+print_success "Directory created with wheel group write access"
 
 # Clone repository
 print_info "Cloning repository to $CONFIG_DIR"
 git clone "$REPO_URL" "$CONFIG_DIR"
-sudo chown -R $USERNAME:users "$CONFIG_DIR"
 print_success "Repository cloned"
 
 # Create system and applications directories if they don't exist

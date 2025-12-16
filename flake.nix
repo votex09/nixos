@@ -11,7 +11,7 @@
         system = "x86_64-linux";
         modules = [
           # Your system configuration
-          /home/.VnixOS/configuration.nix
+          /nix/VnixOS/configuration.nix
         ];
       };
     };

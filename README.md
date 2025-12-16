@@ -25,12 +25,12 @@ chmod +x install.sh
 The installer will:
 
 1. Install git (if not already installed)
-2. Clone this repository to `/home/.VnixOS/`
+2. Clone this repository to `/nix/VnixOS/`
 3. Auto-detect your timezone, locale, and keyboard layout
 4. Prompt for username and hostname
 5. Generate `hardware-configuration.nix` for your system
 6. Generate `configuration.nix` with your settings
-7. Optionally rebuild your system
+7. Rebuild your system and reboot
 
 ## Features
 
@@ -50,7 +50,7 @@ The installer will:
 ## Directory Structure
 
 ```
-/home/.VnixOS/
+/nix/VnixOS/
 ├── flake.nix                   # Flake configuration
 ├── flake.lock                  # Locked dependencies
 ├── configuration.nix           # Main system configuration
@@ -67,29 +67,29 @@ All files are git-tracked, allowing you to version control your system configura
 
 ## Making Changes
 
-After installation, edit files in `/home/.VnixOS/` and apply changes:
+After installation, edit files in `/nix/VnixOS/` and apply changes:
 
 ```bash
 # Edit your configuration
-vim /home/.VnixOS/configuration.nix
+vim /nix/VnixOS/configuration.nix
 
 # Apply changes
-sudo nixos-rebuild switch --flake /home/.VnixOS#YOUR_HOSTNAME
+sudo nixos-rebuild switch --flake /nix/VnixOS#YOUR_HOSTNAME
 ```
 
 ## Customization
 
-**Main Configuration**: Edit `/home/.VnixOS/configuration.nix` to:
+**Main Configuration**: Edit `/nix/VnixOS/configuration.nix` to:
 - Change desktop environment settings
 - Configure services
 - Add more users
 - Modify system-level settings
 
-**Core Packages**: `/home/.VnixOS/applications/core.nix`
+**Core Packages**: `/nix/VnixOS/applications/core.nix`
 - Contains essential system packages
 - Do not remove these unless you know what you're doing
 
-**Custom Packages**: Edit `/home/.VnixOS/applications/user.nix` to:
+**Custom Packages**: Edit `/nix/VnixOS/applications/user.nix` to:
 - Add your personal applications
 - Customize packages for your workflow
 - Safely modify without affecting core system
@@ -99,7 +99,7 @@ sudo nixos-rebuild switch --flake /home/.VnixOS#YOUR_HOSTNAME
 Your configuration is automatically git-tracked. To save changes:
 
 ```bash
-cd /home/.VnixOS
+cd /nix/VnixOS
 git add .
 git commit -m "Updated configuration"
 ```

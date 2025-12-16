@@ -1,152 +1,267 @@
 #!/usr/bin/env bash
 
-# This script sets up the system to use a user-managed NixOS configuration.
-# Run this script with sudo after a fresh NixOS installation.
+set -e  # Exit on error
 
-set -euo pipefail
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run this script with sudo."
-  exit 1
+# Helper functions
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running as root
+if [ "$EUID" -eq 0 ]; then
+    print_error "Do not run this script as root. It will use sudo when needed."
+    exit 1
 fi
 
-# Accept user information as arguments (passed from launcher script)
-USERNAME="${1:-}"
-PASSWORD="${2:-}"
-FULLNAME="${3:-}"
-HOSTNAME="${4:-}"
+# Check if running on NixOS
+if [ ! -f /etc/NIXOS ]; then
+    print_error "This script must be run on NixOS"
+    exit 1
+fi
 
-# Check if git is available, if not install it temporarily
+print_info "NixOS Flake Configuration Installer"
+echo ""
+
+# Get user information
+print_info "Gathering user information..."
+CURRENT_USER=$(whoami)
+print_info "Current user: $CURRENT_USER"
+echo ""
+
+# Get username for configuration
+read -p "Enter username for NixOS configuration [$CURRENT_USER]: " USERNAME
+USERNAME=${USERNAME:-$CURRENT_USER}
+
+# Get hostname
+CURRENT_HOSTNAME=$(hostname)
+read -p "Enter hostname for this system [$CURRENT_HOSTNAME]: " HOSTNAME
+HOSTNAME=${HOSTNAME:-$CURRENT_HOSTNAME}
+
+# Auto-detect timezone
+TIMEZONE=$(timedatectl show -p Timezone --value 2>/dev/null || echo "America/New_York")
+print_info "Auto-detected timezone: $TIMEZONE"
+
+# Auto-detect locale
+LOCALE=$(localectl status | grep "System Locale" | cut -d= -f2 | cut -d. -f1-2 | head -n1)
+if [ -z "$LOCALE" ]; then
+    LOCALE="en_US.UTF-8"
+fi
+print_info "Auto-detected locale: $LOCALE"
+
+# Auto-detect keyboard layout
+KB_LAYOUT=$(localectl status | grep "X11 Layout" | awk '{print $3}')
+if [ -z "$KB_LAYOUT" ]; then
+    KB_LAYOUT="us"
+fi
+print_info "Auto-detected keyboard layout: $KB_LAYOUT"
+
+# Ask about auto-login
+read -p "Enable auto-login for $USERNAME? (y/N): " AUTOLOGIN
+AUTOLOGIN=${AUTOLOGIN,,}  # Convert to lowercase
+
+echo ""
+print_info "Configuration Summary:"
+echo "  Username: $USERNAME"
+echo "  Hostname: $HOSTNAME"
+echo "  Timezone: $TIMEZONE"
+echo "  Locale: $LOCALE"
+echo "  Keyboard Layout: $KB_LAYOUT"
+echo "  Auto-login: $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
+echo ""
+
+read -p "Continue with installation? (y/N): " CONFIRM
+CONFIRM=${CONFIRM,,}
+
+if [ "$CONFIRM" != "y" ]; then
+    print_warning "Installation cancelled"
+    exit 0
+fi
+
+echo ""
+print_info "Starting installation..."
+
+# Fixed installation directory
+CONFIG_DIR="/home/.VnixOS"
+NIXOS_CONFIG_DIR="/etc/nixos"
+REPO_URL="https://github.com/votex09/nixos.git"  # Update this to your actual repo URL
+
+print_info "Configuration directory: $CONFIG_DIR"
+
+# Install git if not already installed
 if ! command -v git &> /dev/null; then
-    echo "--- Git not found, installing temporarily ---"
+    print_info "Git not found. Installing git..."
     nix-env -iA nixos.git
-fi
-
-REPO_URL="https://github.com/votex09/nixos.git"
-NIXOS_CONFIG_DIR="/home/nixosV" # The directory where the repo will be cloned.
-
-echo "--- Backing up existing configuration directory (if any) ---"
-if [ -d "${NIXOS_CONFIG_DIR}" ]; then
-    mv "${NIXOS_CONFIG_DIR}" "${NIXOS_CONFIG_DIR}.backup-$(date --iso-8601=seconds)"
-    echo "Backed up existing ${NIXOS_CONFIG_DIR}"
-fi
-
-echo "--- Cloning NixOS configuration from ${REPO_URL} ---"
-git clone "${REPO_URL}" "${NIXOS_CONFIG_DIR}"
-
-echo "--- Creating backup directory ---"
-mkdir -p "${NIXOS_CONFIG_DIR}/tools/backup"
-
-echo "--- Backing up and copying hardware configuration ---"
-if [ -f "/etc/nixos/hardware-configuration.nix" ]; then
-    cp /etc/nixos/hardware-configuration.nix "${NIXOS_CONFIG_DIR}/system/hardware-configuration.nix"
-    echo "Hardware configuration copied to ${NIXOS_CONFIG_DIR}/system/hardware-configuration.nix"
+    print_success "Git installed"
 else
-    echo "Warning: /etc/nixos/hardware-configuration.nix not found. A placeholder will be used."
+    print_info "Git is already installed"
 fi
 
-echo "--- Creating user settings file from template ---"
-if [ -f "${NIXOS_CONFIG_DIR}/system/settings.nix.template" ]; then
-    cp "${NIXOS_CONFIG_DIR}/system/settings.nix.template" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-    echo "Settings file created from template"
+# Enable flakes permanently
+print_info "Enabling flakes in system configuration..."
+if ! grep -q "experimental-features = \[ \"nix-command\" \"flakes\" \]" /etc/nixos/configuration.nix; then
+    sudo sed -i '/^}/i\  nix.settings.experimental-features = [ "nix-command" "flakes" ];' /etc/nixos/configuration.nix
+    print_info "Rebuilding system to enable flakes..."
+    sudo nixos-rebuild switch
+    print_success "Flakes enabled"
 else
-    echo "Warning: settings.nix.template not found"
+    print_info "Flakes already enabled"
+fi
+
+# Check if already installed
+if [ -d "$CONFIG_DIR" ]; then
+    print_error "VnixOS appears to be already installed at $CONFIG_DIR"
+    print_error "This installer is designed for fresh systems only."
+    print_info "If you want to reinstall, manually remove $CONFIG_DIR first."
     exit 1
 fi
 
-echo "--- Enabling experimental flakes feature ---"
-mkdir -p /etc/nix
-cat > /etc/nix/nix.conf <<EOF
-experimental-features = nix-command flakes
-EOF
+# Clone repository
+print_info "Cloning repository to $CONFIG_DIR"
+git clone "$REPO_URL" "$CONFIG_DIR"
+sudo chown -R $USERNAME:users "$CONFIG_DIR"
+print_success "Repository cloned"
 
-echo "--- Creating new main configuration file ---"
-if [ -f "/etc/nixos/configuration.nix" ]; then
-    mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
+# Create system and applications directories if they don't exist
+if [ ! -d "$CONFIG_DIR/system" ]; then
+    mkdir -p "$CONFIG_DIR/system"
 fi
 
-echo "--- Detecting system settings ---"
-
-# Detect current timezone
-if [ -L /etc/localtime ]; then
-    CURRENT_TIMEZONE=$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||')
-    echo "Detected timezone: ${CURRENT_TIMEZONE}"
-else
-    CURRENT_TIMEZONE="UTC"
-    echo "Could not detect timezone, using: ${CURRENT_TIMEZONE}"
+if [ ! -d "$CONFIG_DIR/applications" ]; then
+    mkdir -p "$CONFIG_DIR/applications"
 fi
 
-# Detect current locale
-if [ -f /etc/locale.conf ]; then
-    CURRENT_LOCALE=$(grep "^LANG=" /etc/locale.conf | cut -d= -f2)
-    echo "Detected locale: ${CURRENT_LOCALE}"
-else
-    CURRENT_LOCALE="en_US.UTF-8"
-    echo "Could not detect locale, using: ${CURRENT_LOCALE}"
+# Generate hardware-configuration.nix
+print_info "Generating hardware-configuration.nix for this system..."
+sudo nixos-generate-config --show-hardware-config > "$CONFIG_DIR/system/hardware-configuration.nix"
+print_success "Hardware configuration generated at $CONFIG_DIR/system/hardware-configuration.nix"
+
+# Generate configuration.nix with user values
+print_info "Generating configuration.nix with user-specific values..."
+
+# Auto-login configuration
+AUTOLOGIN_CONFIG=""
+if [ "$AUTOLOGIN" = "y" ]; then
+    AUTOLOGIN_CONFIG="  # Enable automatic login
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = \"$USERNAME\";"
 fi
 
-# Use the hostname provided by the user
-echo "Setting hostname: ${HOSTNAME}"
+cat > "$CONFIG_DIR/configuration.nix" << EOF
+{ config, pkgs, ... }:
 
-echo ""
-echo "--- Setting up user account ---"
-
-# If credentials weren't passed as arguments, use defaults
-if [ -z "$USERNAME" ]; then
-    DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
-    USERNAME="$DEFAULT_USERNAME"
-fi
-
-echo "Creating user account: ${USERNAME}"
-echo "Full name: ${FULLNAME}"
-
-# Update settings.nix with detected system settings and user information
-sed -i "s|timezone = \".*\";|timezone = \"${CURRENT_TIMEZONE}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-sed -i "s|locale = \".*\";|locale = \"${CURRENT_LOCALE}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-sed -i "s|hostname = \".*\";|hostname = \"${HOSTNAME}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-sed -i "s/fullName = \".*\";/fullName = \"$FULLNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-echo "Updated system and user settings in settings.nix"
-
-# Create the user temporarily if it doesn't exist yet
-if ! id "${USERNAME}" &>/dev/null; then
-    echo "Creating temporary user account..."
-    useradd -m -s /bin/bash "${USERNAME}" || {
-        echo "Error: Failed to create user ${USERNAME}"
-        exit 1
-    }
-fi
-
-# Set the password
-if [ -n "$PASSWORD" ]; then
-    echo "Setting password for ${USERNAME}..."
-    echo "${USERNAME}:${PASSWORD}" | chpasswd || {
-        echo "Error: Failed to set password"
-        exit 1
-    }
-    echo "Password set successfully!"
-else
-    echo "Error: No password provided"
-    exit 1
-fi
-
-echo ""
-echo "--- Creating new main configuration file ---"
-cat > /etc/nixos/configuration.nix <<EOF
-# This file points to the real configuration in your home directory.
 {
-  imports = [ ${NIXOS_CONFIG_DIR}/configuration.nix ];
+  imports = [
+    # Include the results of the hardware scan
+    ./system/hardware-configuration.nix
+    # Application configurations
+    ./applications/core.nix
+    ./applications/user.nix
+  ];
+
+  # Bootloader
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # Networking
+  networking.hostName = "$HOSTNAME";
+  networking.networkmanager.enable = true;
+
+  # Time zone and internationalization
+  time.timeZone = "$TIMEZONE";
+  i18n.defaultLocale = "$LOCALE";
+
+  # Enable the X11 windowing system
+  services.xserver.enable = true;
+
+  # Enable the GNOME Desktop Environment
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  # Configure keymap
+  services.xserver.xkb = {
+    layout = "$KB_LAYOUT";
+    variant = "";
+  };
+
+${AUTOLOGIN_CONFIG}
+
+  # Enable sound with pipewire
+  hardware.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
+
+  # Define a user account
+  users.users.$USERNAME = {
+    isNormalUser = true;
+    description = "$USERNAME";
+    extraGroups = [ "networkmanager" "wheel" ];
+    packages = with pkgs; [
+      firefox
+      gnome-tweaks
+    ];
+  };
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  # Enable flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  # This value determines the NixOS release compatibility
+  system.stateVersion = "24.05";
 }
 EOF
 
-echo "--- Applying the new NixOS configuration ---"
-echo "Note: The screen may go black when the display manager switches."
-echo "The system will automatically reboot after the configuration is applied."
-echo ""
+print_success "Configuration generated at $CONFIG_DIR/configuration.nix"
 
-# Use flakes for nixos-rebuild
-nixos-rebuild switch --flake "${NIXOS_CONFIG_DIR}#nixos-desktop"
+# Test the flake configuration
+print_info "Testing flake configuration..."
+cd "$CONFIG_DIR"
+if nix flake check 2>/dev/null; then
+    print_success "Flake configuration is valid"
+else
+    print_warning "Flake check had warnings (this is usually okay)"
+fi
 
-# After nixos-rebuild switch, the display manager has changed and screen is black
-# Reboot immediately
-echo b > /proc/sysrq-trigger 2>/dev/null || reboot
+# Apply configuration
+print_info "Applying NixOS configuration..."
+print_warning "This may take several minutes..."
+
+if sudo nixos-rebuild switch --flake "$CONFIG_DIR#$HOSTNAME"; then
+    echo ""
+    print_success "Installation complete!"
+    print_success "Your NixOS system has been configured and will reboot momentarily."
+    echo ""
+    sleep 5
+    reboot
+else
+    print_error "System rebuild failed. Please check the errors above."
+    print_warning "Cleaning up failed installation..."
+    sudo rm -rf "$CONFIG_DIR"
+    print_info "Installation files removed. You can run the installer again."
+    exit 1
+fi

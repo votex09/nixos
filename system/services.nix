@@ -45,21 +45,23 @@ in
   # Configure GNOME theme settings
   programs.dconf.enable = true;
 
-  # Set default dconf settings for all users
-  programs.dconf.profiles.user.databases = [{
-    settings = {
-      "org/gnome/desktop/interface" = {
-        gtk-theme = "catppuccin-mocha-mauve-standard+default";
-        icon-theme = "Papirus-Dark";
-        cursor-theme = "catppuccin-mocha-dark-cursors";
-        cursor-size = 24;
-      };
-    };
-  }];
-
   environment.sessionVariables = {
     XCURSOR_THEME = "catppuccin-mocha-dark-cursors";
     XCURSOR_SIZE = "24";
+    GTK_THEME = "catppuccin-mocha-mauve-standard+default";
+  };
+
+  # Create a systemd user service to apply GNOME theme settings on login
+  systemd.user.services.apply-gnome-theme = {
+    description = "Apply Catppuccin theme to GNOME";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    script = ''
+      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/gtk-theme "'catppuccin-mocha-mauve-standard+default'"
+      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/icon-theme "'Papirus-Dark'"
+      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/cursor-theme "'catppuccin-mocha-dark-cursors'"
+      ${pkgs.dconf}/bin/dconf write /org/gnome/desktop/interface/cursor-size 24
+    '';
   };
 
   services.displayManager.sddm.enable = (settings.desktop == "kde");

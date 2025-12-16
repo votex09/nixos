@@ -136,7 +136,11 @@ echo "After reboot, log in with username: ${USERNAME}"
 echo ""
 echo "Press Ctrl+C to cancel automatic reboot."
 
+# Flush output before reboot
+sync
+
 sleep 5
 
 echo "Rebooting now..."
-reboot
+# Use systemctl reboot which works better in piped scripts
+exec systemctl reboot

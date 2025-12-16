@@ -14,6 +14,7 @@ fi
 USERNAME="${1:-}"
 PASSWORD="${2:-}"
 FULLNAME="${3:-}"
+HOSTNAME="${4:-}"
 
 # Check if git is available, if not install it temporarily
 if ! command -v git &> /dev/null; then
@@ -49,6 +50,30 @@ if [ -f "/etc/nixos/configuration.nix" ]; then
     mv "/etc/nixos/configuration.nix" "${NIXOS_CONFIG_DIR}/tools/backup/configuration.nix.backup"
 fi
 
+echo "--- Detecting system settings ---"
+
+# Detect current timezone
+if [ -L /etc/localtime ]; then
+    CURRENT_TIMEZONE=$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||')
+    echo "Detected timezone: ${CURRENT_TIMEZONE}"
+else
+    CURRENT_TIMEZONE="UTC"
+    echo "Could not detect timezone, using: ${CURRENT_TIMEZONE}"
+fi
+
+# Detect current locale
+if [ -f /etc/locale.conf ]; then
+    CURRENT_LOCALE=$(grep "^LANG=" /etc/locale.conf | cut -d= -f2)
+    echo "Detected locale: ${CURRENT_LOCALE}"
+else
+    CURRENT_LOCALE="en_US.UTF-8"
+    echo "Could not detect locale, using: ${CURRENT_LOCALE}"
+fi
+
+# Use the hostname provided by the user
+echo "Setting hostname: ${HOSTNAME}"
+
+echo ""
 echo "--- Setting up user account ---"
 
 # If credentials weren't passed as arguments, use defaults
@@ -60,10 +85,13 @@ fi
 echo "Creating user account: ${USERNAME}"
 echo "Full name: ${FULLNAME}"
 
-# Update settings.nix with user information
+# Update settings.nix with detected system settings and user information
+sed -i "s|timezone = \".*\";|timezone = \"${CURRENT_TIMEZONE}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+sed -i "s|locale = \".*\";|locale = \"${CURRENT_LOCALE}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+sed -i "s|hostname = \".*\";|hostname = \"${HOSTNAME}\";|" "${NIXOS_CONFIG_DIR}/system/settings.nix"
 sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
 sed -i "s/fullName = \".*\";/fullName = \"$FULLNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-echo "Updated user settings in settings.nix"
+echo "Updated system and user settings in settings.nix"
 
 # Create the user temporarily if it doesn't exist yet
 if ! id "${USERNAME}" &>/dev/null; then

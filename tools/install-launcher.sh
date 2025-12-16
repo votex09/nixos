@@ -30,6 +30,23 @@ read -p "Enter full name (default: ${USERNAME}): " FULLNAME
 FULLNAME=${FULLNAME:-$USERNAME}
 echo ""
 
+# Get hostname
+read -p "Enter hostname (default: nixos-desktop): " HOSTNAME
+HOSTNAME=${HOSTNAME:-nixos-desktop}
+
+# Remove any whitespace
+HOSTNAME=$(echo "$HOSTNAME" | tr -d '[:space:]')
+
+# Validate hostname format
+if ! echo "$HOSTNAME" | grep -qE '^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$'; then
+    echo "Error: Invalid hostname format. Hostname must contain only lowercase letters, numbers, and hyphens,"
+    echo "and cannot start or end with a hyphen."
+    exit 1
+fi
+
+echo "Hostname: ${HOSTNAME}"
+echo ""
+
 # Get password
 while true; do
     read -s -p "Enter password for ${USERNAME}: " PASSWORD
@@ -56,4 +73,4 @@ echo ""
 
 # Download the main install script and run it with sudo, passing all the info
 curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | \
-    sudo bash -s -- "${USERNAME}" "${PASSWORD}" "${FULLNAME}"
+    sudo bash -s -- "${USERNAME}" "${PASSWORD}" "${FULLNAME}" "${HOSTNAME}"

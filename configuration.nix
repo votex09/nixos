@@ -28,6 +28,9 @@ in
   time.timeZone = settings.timezone;
   i18n.defaultLocale = settings.locale;
 
+  # Boot loader configuration is handled by hardware-configuration.nix
+  # which is auto-generated during NixOS installation and copied by the install script.
+
   # System-wide state version.
   system.stateVersion = "25.11";
 }

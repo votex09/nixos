@@ -17,7 +17,6 @@ in
   services.printing.enable = true;
 
   # Enable sound with PipeWire.
-  sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -33,8 +32,8 @@ in
   services.xserver.displayManager.gdm.enable = (settings.desktop == "gnome");
   services.xserver.desktopManager.gnome.enable = (settings.desktop == "gnome");
 
-  services.xserver.displayManager.sddm.enable = (settings.desktop == "kde");
-  services.xserver.desktopManager.plasma5.enable = (settings.desktop == "kde");
+  services.displayManager.sddm.enable = (settings.desktop == "kde");
+  services.desktopManager.plasma6.enable = (settings.desktop == "kde");
 
   services.xserver.displayManager.lightdm.enable = (settings.desktop == "xfce");
   services.xserver.desktopManager.xfce.enable = (settings.desktop == "xfce");

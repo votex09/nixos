@@ -34,12 +34,20 @@ in
   # GDM (for GNOME) and SDDM (for KDE) will default to a Wayland session.
   services.xserver.displayManager.gdm.enable = (settings.desktop == "gnome");
   services.xserver.desktopManager.gnome.enable = (settings.desktop == "gnome");
+
   # Exclude some GNOME apps to reduce bloat
   environment.gnome.excludePackages = (if settings.desktop == "gnome" then (with pkgs; [
     gnome-tour
     epiphany # web browser
     geary # email client
   ]) else []);
+
+  # Configure GNOME theme settings
+  programs.dconf.enable = true;
+  environment.sessionVariables = {
+    XCURSOR_THEME = "catppuccin-mocha-dark-cursors";
+    XCURSOR_SIZE = "24";
+  };
 
   services.displayManager.sddm.enable = (settings.desktop == "kde");
   services.desktopManager.plasma6.enable = (settings.desktop == "kde");

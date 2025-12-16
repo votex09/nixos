@@ -12,6 +12,15 @@
     wget
     curl
 
+    # --- GNOME Extensions & Tools ---
+    gnome-tweaks
+    gnomeExtensions.appindicator
+
+    # --- Themes ---
+    catppuccin-gtk
+    catppuccin-cursors.mochaDark
+    papirus-icon-theme
+
     # --- Add your desired packages here ---
     firefox
     # vlc

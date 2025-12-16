@@ -102,4 +102,13 @@ nixos-rebuild switch
 echo ""
 echo "--- Installation complete! ---"
 echo "Your system is now managed by the configuration from your GitHub repository."
-echo "You can now reboot and log in with username: ${USERNAME}"
+echo ""
+echo "The system will reboot in 5 seconds..."
+echo "After reboot, log in with username: ${USERNAME}"
+echo ""
+echo "Press Ctrl+C to cancel automatic reboot."
+
+sleep 5
+
+echo "Rebooting now..."
+reboot

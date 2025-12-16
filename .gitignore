@@ -1,0 +1,7 @@
+# Hardware configuration is machine-specific and should not be committed
+system/hardware-configuration.nix
+
+# Backup files
+tools/backup/
+*.backup
+*.backup-*

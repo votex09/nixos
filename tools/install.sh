@@ -22,6 +22,9 @@ fi
 echo "--- Cloning NixOS configuration from ${REPO_URL} ---"
 git clone "${REPO_URL}" "${NIXOS_CONFIG_DIR}"
 
+echo "--- Creating backup directory ---"
+mkdir -p "${NIXOS_CONFIG_DIR}/tools/backup"
+
 echo "--- Backing up and copying hardware configuration ---"
 if [ -f "/etc/nixos/hardware-configuration.nix" ]; then
     cp /etc/nixos/hardware-configuration.nix "${NIXOS_CONFIG_DIR}/system/hardware-configuration.nix"

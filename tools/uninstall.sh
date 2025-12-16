@@ -38,7 +38,7 @@ echo "--- Uninstallation complete! ---"
 echo "The system has been reverted to its previous configuration."
 
 shopt -s nullglob
-BACKUP_DIRS=(/home/nixos.backup-*)
+BACKUP_DIRS=(/home/nixosV.backup-*)
 if [ ${#BACKUP_DIRS[@]} -gt 0 ]; then
-    echo "Note: A backup of the original user configuration may exist at: ${BACKUP_DIRS[0]}"
+    echo "Note: A backup of the original configuration directory may exist at: ${BACKUP_DIRS[0]}"
 fi

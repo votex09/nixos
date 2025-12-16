@@ -11,7 +11,6 @@
     git
     wget
     curl
-    git
 
     # --- Add your desired packages here ---
     firefox

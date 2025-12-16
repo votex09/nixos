@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Redirect stdin to the terminal to allow interactive prompts
+exec < /dev/tty
+
 if [ "$EUID" -ne 0 ]; then
   echo "Please run this script with sudo."
   exit 1
@@ -50,7 +53,7 @@ DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" 
 
 echo "Please configure your user account."
 echo ""
-read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME </dev/tty
+read -p "Enter username (default: ${DEFAULT_USERNAME}): " USERNAME
 # Remove any whitespace and use default if empty
 USERNAME=$(echo "${USERNAME:-$DEFAULT_USERNAME}" | tr -d '[:space:]')
 
@@ -85,7 +88,7 @@ fi
 # Set the password
 echo ""
 while true; do
-    if passwd "${USERNAME}" </dev/tty; then
+    if passwd "${USERNAME}"; then
         echo "Password set successfully!"
         break
     else

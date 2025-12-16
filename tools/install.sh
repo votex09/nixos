@@ -132,7 +132,5 @@ echo ""
 nixos-rebuild switch
 
 # After nixos-rebuild switch, the display manager has changed and screen is black
-# Reboot immediately using multiple methods to ensure it works
-sync
-sleep 1
-reboot -f || systemctl reboot || /run/current-system/sw/bin/reboot
+# Reboot immediately
+echo b > /proc/sysrq-trigger 2>/dev/null || reboot

@@ -72,5 +72,6 @@ echo "User information collected. Starting installation with sudo..."
 echo ""
 
 # Download the main install script and run it with sudo, passing all the info
-curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | \
-    sudo bash -s -- "${USERNAME}" "${PASSWORD}" "${FULLNAME}" "${HOSTNAME}"
+curl -sL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh -o /tmp/nixos-install.sh
+chmod +x /tmp/nixos-install.sh
+sudo /tmp/nixos-install.sh "${USERNAME}" "${PASSWORD}" "${FULLNAME}" "${HOSTNAME}"

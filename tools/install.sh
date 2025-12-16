@@ -48,12 +48,14 @@ print_info "Current user: $CURRENT_USER"
 echo ""
 
 # Get username for configuration
-read -p "Enter username for NixOS configuration [$CURRENT_USER]: " USERNAME
+echo -n "Enter username for NixOS configuration [$CURRENT_USER]: "
+read USERNAME
 USERNAME=${USERNAME:-$CURRENT_USER}
 
 # Get hostname
 CURRENT_HOSTNAME=$(hostname)
-read -p "Enter hostname for this system [$CURRENT_HOSTNAME]: " HOSTNAME
+echo -n "Enter hostname for this system [$CURRENT_HOSTNAME]: "
+read HOSTNAME
 HOSTNAME=${HOSTNAME:-$CURRENT_HOSTNAME}
 
 # Auto-detect timezone
@@ -75,7 +77,8 @@ fi
 print_info "Auto-detected keyboard layout: $KB_LAYOUT"
 
 # Ask about auto-login
-read -p "Enable auto-login for $USERNAME? (y/N): " AUTOLOGIN
+echo -n "Enable auto-login for $USERNAME? (y/N): "
+read AUTOLOGIN
 AUTOLOGIN=${AUTOLOGIN,,}  # Convert to lowercase
 
 echo ""
@@ -88,7 +91,8 @@ echo "  Keyboard Layout: $KB_LAYOUT"
 echo "  Auto-login: $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
 echo ""
 
-read -p "Continue with installation? (y/N): " CONFIRM
+echo -n "Continue with installation? (y/N): "
+read CONFIRM
 CONFIRM=${CONFIRM,,}
 
 if [ "$CONFIRM" != "y" ]; then

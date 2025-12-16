@@ -8,10 +8,9 @@
   timezone = "America/Chicago"; # e.g., "Europe/Berlin", "America/Los_Angeles"
   locale = "en_US.UTF-8";
 
-  # --- User-specific Settings ---
-  username = "nixos";
-  fullName = "NixOS User";
-  email = "nixos@example.com";
+  # These values are set during installation by the install script
+  username = "user";
+  fullName = "User";
 
   # --- Desktop Environment ---
   # Valid options include "gnome", "kde", "xfce", or "none".

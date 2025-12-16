@@ -10,9 +10,10 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Accept username and password as arguments (passed from launcher script)
+# Accept user information as arguments (passed from launcher script)
 USERNAME="${1:-}"
 PASSWORD="${2:-}"
+FULLNAME="${3:-}"
 
 # Check if git is available, if not install it temporarily
 if ! command -v git &> /dev/null; then
@@ -57,13 +58,12 @@ if [ -z "$USERNAME" ]; then
 fi
 
 echo "Creating user account: ${USERNAME}"
+echo "Full name: ${FULLNAME}"
 
-# Update settings.nix with the username
-DEFAULT_USERNAME=$(grep "username = " "${NIXOS_CONFIG_DIR}/system/settings.nix" | sed 's/.*username = "\(.*\)";/\1/' | tr -d '[:space:]')
-if [ "$USERNAME" != "$DEFAULT_USERNAME" ]; then
-    sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
-    echo "Updated username in settings.nix to: ${USERNAME}"
-fi
+# Update settings.nix with user information
+sed -i "s/username = \".*\";/username = \"$USERNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+sed -i "s/fullName = \".*\";/fullName = \"$FULLNAME\";/" "${NIXOS_CONFIG_DIR}/system/settings.nix"
+echo "Updated user settings in settings.nix"
 
 # Create the user temporarily if it doesn't exist yet
 if ! id "${USERNAME}" &>/dev/null; then

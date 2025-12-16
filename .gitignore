@@ -1,6 +1,9 @@
 # Hardware configuration is machine-specific and should not be committed
 system/hardware-configuration.nix
 
+# User settings are machine-specific and should not be committed
+system/settings.nix
+
 # Backup files
 tools/backup/
 *.backup

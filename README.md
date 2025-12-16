@@ -7,13 +7,13 @@ A simple, modular NixOS configuration with GNOME desktop environment.
 Run this one-liner to install:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kylerj/nixos/main/tools/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | bash
 ```
 
 Or with wget:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/kylerj/nixos/main/tools/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh | bash
 ```
 
 ## What It Does

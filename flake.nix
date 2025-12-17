@@ -18,6 +18,10 @@
       # Get list of available configurations
       configDirs = builtins.readDir ./configurations;
       getConfigs = attrsets.filterAttrs (name: type: type == "directory") configDirs;
+
+      # Read variables from the client directory if they exist
+      variablesPath = ./client/variables.nix;
+      variables = if builtins.pathExists variablesPath then import variablesPath else {};
     in
     {
       nixosConfigurations = mapAttrs (configName: _:
@@ -27,7 +31,7 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit self;
+            inherit self variables;
           };
           modules = [
             # Core system configuration

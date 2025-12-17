@@ -1,8 +1,4 @@
-{ config, pkgs, ... }:
-
-let
-  variables = import ../../client/variables.nix;
-in
+{ config, pkgs, variables ? {}, ... }:
 
 {
   imports = [
@@ -11,10 +7,10 @@ in
   ];
 
   # System settings from variables.nix
-  networking.hostName = variables.hostname;
-  time.timeZone = variables.timezone;
-  i18n.defaultLocale = variables.locale;
-  console.keyMap = variables.keyboardLayout;
+  networking.hostName = variables.hostname or "nixos";
+  time.timeZone = variables.timezone or "UTC";
+  i18n.defaultLocale = variables.locale or "en_US.UTF-8";
+  console.keyMap = variables.keyboardLayout or "us";
 
   # Bootloader
   boot.loader.systemd-boot.enable = true;

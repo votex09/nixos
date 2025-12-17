@@ -1,14 +1,14 @@
-{ config, pkgs, ... }:
+{ config, pkgs, variables ? {}, ... }:
 
 let
-  variables = import ../client/variables.nix;
+  de = variables.desktopEnvironment or "gnome";
 in
 
 {
   # Desktop Environment selection
   desktopEnvironments = {
     gnome = {
-      enable = variables.desktopEnvironment == "gnome";
+      enable = de == "gnome";
       packages = with pkgs; [
         gnome-tweaks
         gnome-console
@@ -29,7 +29,7 @@ in
     };
 
     kde = {
-      enable = variables.desktopEnvironment == "kde";
+      enable = de == "kde";
       packages = with pkgs; [
         kdePackages.plasma-desktop
         kdePackages.kdeplasma-addons
@@ -47,7 +47,7 @@ in
     };
 
     cosmic = {
-      enable = variables.desktopEnvironment == "cosmic";
+      enable = de == "cosmic";
       packages = with pkgs; [
         cosmic-desktop
       ];
@@ -83,11 +83,11 @@ in
   # Apply the selected DE configuration
   imports = [
     (
-      if variables.desktopEnvironment == "gnome" then
+      if de == "gnome" then
         (import ./desktop-environments/gnome.nix)
-      else if variables.desktopEnvironment == "kde" then
+      else if de == "kde" then
         (import ./desktop-environments/kde.nix)
-      else if variables.desktopEnvironment == "cosmic" then
+      else if de == "cosmic" then
         (import ./desktop-environments/cosmic.nix)
       else
         (import ./desktop-environments/gnome.nix)  # Default to GNOME

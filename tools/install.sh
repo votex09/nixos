@@ -47,7 +47,7 @@ cleanup_installer() {
     # Only clean up CONFIG_DIR if installation didn't complete successfully
     if [ $? -ne 0 ] && [ -d "$CONFIG_DIR" ]; then
         print_warning "Cleaning up failed installation..."
-        sudo rm -rf "$CONFIG_DIR"
+        #sudo rm -rf "$CONFIG_DIR"
     fi
 
     # Schedule deletion of the installer script in the background to avoid

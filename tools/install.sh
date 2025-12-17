@@ -40,9 +40,16 @@ fi
 
 # Store the installer script path for cleanup
 INSTALLER_SCRIPT="$0"
+CONFIG_DIR="/nix/VnixOS"
 
-# Cleanup function to remove the installer script
+# Cleanup function to remove installer script and failed installations
 cleanup_installer() {
+    # Only clean up CONFIG_DIR if installation didn't complete successfully
+    if [ $? -ne 0 ] && [ -d "$CONFIG_DIR" ]; then
+        print_warning "Cleaning up failed installation..."
+        sudo rm -rf "$CONFIG_DIR"
+    fi
+
     # Schedule deletion of the installer script in the background to avoid
     # "text file busy" errors that occur when deleting a running script
     (sleep 1 && rm -f "$INSTALLER_SCRIPT") &
@@ -54,8 +61,7 @@ trap cleanup_installer EXIT
 print_info "VnixOS Flake Configuration Installer"
 echo ""
 
-# Fixed installation directory
-CONFIG_DIR="/nix/VnixOS"
+# Repository URL
 REPO_URL="https://github.com/votex09/nixos.git"
 
 print_info "Configuration directory: $CONFIG_DIR"

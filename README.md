@@ -4,9 +4,10 @@ A modular, flake-based NixOS configuration supporting multiple desktop environme
 
 ## Quick Install
 
-Download and run the installer:
+Download and run the installer (always gets the latest version):
 
 ```bash
+# Using curl (overwrites if file exists)
 curl -fsSL https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh -o install.sh
 chmod +x install.sh
 ./install.sh
@@ -15,10 +16,13 @@ chmod +x install.sh
 Or with wget:
 
 ```bash
-wget https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh
+# Using wget (with -O to overwrite)
+wget -O install.sh https://raw.githubusercontent.com/votex09/nixos/main/tools/install.sh
 chmod +x install.sh
 ./install.sh
 ```
+
+**Note**: Both `curl -o` and `wget -O` will overwrite any existing `install.sh` file, ensuring you always have the latest version.
 
 ## What It Does
 

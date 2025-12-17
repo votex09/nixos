@@ -1,9 +1,9 @@
-{ config, pkgs, variables ? {}, ... }:
+{ config, pkgs, self, variables ? {}, ... }:
 
 {
   imports = [
-    ../../client/hardware-configuration.nix
-    ../../coresys/applications.nix
+    "${self}/client/hardware-configuration.nix"
+    "${self}/coresys/applications.nix"
   ];
 
   # System settings from variables.nix

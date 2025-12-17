@@ -234,9 +234,8 @@ if [ "$AUTOLOGIN" = "y" ]; then
     AUTOLOGIN_VALUE="true"
 fi
 
-# Get the script directory to find the template
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATE_FILE="$SCRIPT_DIR/templates/variables.nix"
+# Use template from the cloned repository
+TEMPLATE_FILE="$CONFIG_DIR/tools/templates/variables.nix"
 
 if [ ! -f "$TEMPLATE_FILE" ]; then
     print_error "Template file not found: $TEMPLATE_FILE"

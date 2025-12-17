@@ -84,13 +84,13 @@ in
   imports = [
     (
       if de == "gnome" then
-        (import "${self}/coresys/desktop-environments/gnome.nix")
+        (import (self + /coresys/desktop-environments/gnome.nix))
       else if de == "kde" then
-        (import "${self}/coresys/desktop-environments/kde.nix")
+        (import (self + /coresys/desktop-environments/kde.nix))
       else if de == "cosmic" then
-        (import "${self}/coresys/desktop-environments/cosmic.nix")
+        (import (self + /coresys/desktop-environments/cosmic.nix))
       else
-        (import "${self}/coresys/desktop-environments/gnome.nix")  # Default to GNOME
+        (import (self + /coresys/desktop-environments/gnome.nix))  # Default to GNOME
     )
   ];
 }

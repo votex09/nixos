@@ -1,4 +1,4 @@
-{ config, pkgs, variables ? {}, ... }:
+{ config, pkgs, self, variables ? {}, ... }:
 
 let
   de = variables.desktopEnvironment or "gnome";
@@ -84,13 +84,13 @@ in
   imports = [
     (
       if de == "gnome" then
-        (import ./desktop-environments/gnome.nix)
+        (import "${self}/coresys/desktop-environments/gnome.nix")
       else if de == "kde" then
-        (import ./desktop-environments/kde.nix)
+        (import "${self}/coresys/desktop-environments/kde.nix")
       else if de == "cosmic" then
-        (import ./desktop-environments/cosmic.nix)
+        (import "${self}/coresys/desktop-environments/cosmic.nix")
       else
-        (import ./desktop-environments/gnome.nix)  # Default to GNOME
+        (import "${self}/coresys/desktop-environments/gnome.nix")  # Default to GNOME
     )
   ];
 }

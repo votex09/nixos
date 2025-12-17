@@ -38,7 +38,7 @@ if [ ! -f /etc/NIXOS ]; then
     exit 1
 fi
 
-print_info "NixOS Flake Configuration Installer"
+print_info "VnixOS Flake Configuration Installer"
 echo ""
 
 # Get user information
@@ -57,6 +57,13 @@ CURRENT_HOSTNAME=$(hostname)
 echo -n "Enter hostname for this system [$CURRENT_HOSTNAME]: "
 read HOSTNAME
 HOSTNAME=${HOSTNAME:-$CURRENT_HOSTNAME}
+
+# TODO: Get list of available configurations (read ./configurations for list and load it into a variable)
+
+# Get user requested device configuration TODO: actually show the list to the user...
+echo -n "Enter name of the VnixOS configuration to apply: "
+read CONFIGURATION
+CONFIGURATION=${CONFIGURATION:-"default"}
 
 # Auto-detect timezone
 TIMEZONE=$(timedatectl show -p Timezone --value 2>/dev/null || echo "America/New_York")
@@ -83,12 +90,13 @@ AUTOLOGIN=${AUTOLOGIN,,}  # Convert to lowercase
 
 echo ""
 print_info "Configuration Summary:"
-echo "  Username: $USERNAME"
-echo "  Hostname: $HOSTNAME"
-echo "  Timezone: $TIMEZONE"
-echo "  Locale: $LOCALE"
+echo "  Username:        $USERNAME"
+echo "  Hostname:        $HOSTNAME"
+echo "  Config:          $CONFIGURATION"
+echo "  Timezone:        $TIMEZONE"
+echo "  Locale:          $LOCALE"
 echo "  Keyboard Layout: $KB_LAYOUT"
-echo "  Auto-login: $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
+echo "  Auto-login:      $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
 echo ""
 
 echo -n "Continue with installation? (y/N): "
@@ -105,12 +113,11 @@ print_info "Starting installation..."
 
 # Fixed installation directory
 CONFIG_DIR="/nix/VnixOS"
-NIXOS_CONFIG_DIR="/etc/nixos"
-REPO_URL="https://github.com/votex09/nixos.git"  # Update this to your actual repo URL
+REPO_URL="https://github.com/votex09/nixos.git"
 
 print_info "Configuration directory: $CONFIG_DIR"
 
-# Install git if not already installed
+# Temp Install git if not already installed
 if ! command -v git &> /dev/null; then
     print_info "Git not found. Installing git..."
     nix-env -iA nixos.git
@@ -150,134 +157,15 @@ print_info "Cloning repository to $CONFIG_DIR"
 git clone "$REPO_URL" "$CONFIG_DIR"
 print_success "Repository cloned"
 
-# Create host-specific directories
-print_info "Creating host configuration directory..."
-mkdir -p "$CONFIG_DIR/hosts/$HOSTNAME"
-mkdir -p "$CONFIG_DIR/applications"
-print_success "Directory structure created"
-
-# Generate flake.nix only on first install
-if [ ! -f "$CONFIG_DIR/flake.nix" ]; then
-    print_info "Generating flake.nix..."
-    cat > "$CONFIG_DIR/flake.nix" << 'EOF'
-{
-  description = "NixOS configuration";
-
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-  };
-
-  outputs = { self, nixpkgs }:
-    let
-      mkHost = hostname: nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          ./hosts/${hostname}/configuration.nix
-        ];
-      };
-
-      # Auto-discover all host directories
-      hostDirs = builtins.attrNames (builtins.readDir ./hosts);
-    in {
-      nixosConfigurations = builtins.listToAttrs (
-        map (host: { name = host; value = mkHost host; }) hostDirs
-      );
-    };
-}
-EOF
-    print_success "Flake configuration generated"
-else
-    print_info "flake.nix already exists, skipping generation (multi-host setup)"
-fi
-
 # Generate hardware-configuration.nix
 print_info "Generating hardware-configuration.nix for this system..."
-sudo nixos-generate-config --show-hardware-config > "$CONFIG_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+sudo nixos-generate-config --show-hardware-config > "$CONFIG_DIR/client/hardware-configuration.nix"
 print_success "Hardware configuration generated"
 
-# Generate configuration.nix with user values
-print_info "Generating configuration.nix with user-specific values..."
-
-# Auto-login configuration
-AUTOLOGIN_CONFIG=""
-if [ "$AUTOLOGIN" = "y" ]; then
-    AUTOLOGIN_CONFIG="  # Enable automatic login
-  services.xserver.displayManager.autoLogin.enable = true;
-  services.xserver.displayManager.autoLogin.user = \"$USERNAME\";"
-fi
-
-cat > "$CONFIG_DIR/hosts/$HOSTNAME/configuration.nix" << EOF
-{ config, pkgs, ... }:
-
-{
-  imports = [
-    # Include the results of the hardware scan
-    ./hardware-configuration.nix
-    # Application configurations
-    ../../applications/core.nix
-    ../../applications/user.nix
-  ];
-
-  # Bootloader
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  # Networking
-  networking.hostName = "$HOSTNAME";
-  networking.networkmanager.enable = true;
-
-  # Time zone and internationalization
-  time.timeZone = "$TIMEZONE";
-  i18n.defaultLocale = "$LOCALE";
-
-  # Enable the X11 windowing system
-  services.xserver.enable = true;
-
-  # Enable the GNOME Desktop Environment
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
-
-  # Configure keymap
-  services.xserver.xkb = {
-    layout = "$KB_LAYOUT";
-    variant = "";
-  };
-
-${AUTOLOGIN_CONFIG}
-
-  # Enable sound with pipewire
-  hardware.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
-  # Define a user account
-  users.users.$USERNAME = {
-    isNormalUser = true;
-    description = "$USERNAME";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      firefox
-      gnome-tweaks
-    ];
-  };
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
-  # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-  # This value determines the NixOS release compatibility
-  system.stateVersion = "24.05";
-}
-EOF
-
-print_success "Configuration generated at $CONFIG_DIR/hosts/$HOSTNAME/configuration.nix"
+# Generate variables.nix with user values
+print_info "Generating variables.nix with user-specific values..."
+# TODO: Generate the file using the template: ./tools/templates/variables.nix
+print_success "Configuration generated at $CONFIG_DIR/client/variables.nix"
 
 # Test the flake configuration
 print_info "Testing flake configuration..."
@@ -292,7 +180,7 @@ fi
 print_info "Applying NixOS configuration..."
 print_warning "This may take several minutes..."
 
-if sudo nixos-rebuild switch --flake "$CONFIG_DIR#$HOSTNAME"; then
+if sudo nixos-rebuild switch --flake "$CONFIG_DIR#$CONFIGURATION"; then
     echo ""
     print_success "Installation complete!"
     print_success "Your NixOS system has been configured and will reboot momentarily."

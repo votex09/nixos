@@ -278,7 +278,7 @@ if sudo nixos-rebuild switch --flake "$CONFIG_DIR#$CONFIGURATION"; then
 else
     print_error "System rebuild failed. Please check the errors above."
     print_warning "Cleaning up failed installation..."
-    sudo rm -rf "$CONFIG_DIR"
+    #sudo rm -rf "$CONFIG_DIR"
     print_info "Installation files removed. You can run the installer again."
     exit 1
 fi

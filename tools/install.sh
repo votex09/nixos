@@ -41,7 +41,42 @@ fi
 print_info "VnixOS Flake Configuration Installer"
 echo ""
 
-# Get user information
+# Fixed installation directory
+CONFIG_DIR="/nix/VnixOS"
+REPO_URL="https://github.com/votex09/nixos.git"
+
+print_info "Configuration directory: $CONFIG_DIR"
+
+# Install git if not already installed
+if ! command -v git &> /dev/null; then
+    print_info "Git not found. Installing git..."
+    nix-env -iA nixos.git
+    print_success "Git installed"
+else
+    print_info "Git is already installed"
+fi
+
+# Check if already installed
+if [ -d "$CONFIG_DIR" ]; then
+    print_error "NixOS configuration appears to be already installed at $CONFIG_DIR"
+    print_error "This installer is designed for fresh systems only."
+    print_info "If you want to reinstall, manually remove $CONFIG_DIR first (sudo rm -rf $CONFIG_DIR)."
+    exit 1
+fi
+
+# Create the directory with proper permissions
+print_info "Creating configuration directory..."
+sudo mkdir -p "$CONFIG_DIR"
+sudo chown root:wheel "$CONFIG_DIR"
+sudo chmod 775 "$CONFIG_DIR"
+print_success "Directory created with wheel group write access"
+
+# Clone repository
+print_info "Cloning repository to $CONFIG_DIR"
+git clone "$REPO_URL" "$CONFIG_DIR"
+print_success "Repository cloned"
+
+# Now gather user information
 print_info "Gathering user information..."
 CURRENT_USER=$(whoami)
 print_info "Current user: $CURRENT_USER"
@@ -57,12 +92,13 @@ CURRENT_HOSTNAME=$(hostname)
 echo -n "Enter hostname for this system [$CURRENT_HOSTNAME]: "
 read HOSTNAME
 HOSTNAME=${HOSTNAME:-$CURRENT_HOSTNAME}
+echo ""
 
 # Get list of available configurations
 print_info "Available configurations:"
-CONFIGS=($(find ./configurations -maxdepth 1 -mindepth 1 -type d -exec basename {} \;))
+CONFIGS=($(find "$CONFIG_DIR/configurations" -maxdepth 1 -mindepth 1 -type d -exec basename {} \;))
 if [ ${#CONFIGS[@]} -eq 0 ]; then
-    print_error "No configurations found in ./configurations"
+    print_error "No configurations found in $CONFIG_DIR/configurations"
     exit 1
 fi
 
@@ -87,6 +123,8 @@ if [[ "$CONFIG_INPUT" =~ ^[0-9]+$ ]]; then
 else
     CONFIGURATION=$CONFIG_INPUT
 fi
+print_info "Selected configuration: $CONFIGURATION"
+echo ""
 
 # Desktop Environment selection
 print_info "Available desktop environments:"
@@ -152,22 +190,7 @@ if [ "$CONFIRM" != "y" ]; then
 fi
 
 echo ""
-print_info "Starting installation..."
-
-# Fixed installation directory
-CONFIG_DIR="/nix/VnixOS"
-REPO_URL="https://github.com/votex09/nixos.git"
-
-print_info "Configuration directory: $CONFIG_DIR"
-
-# Temp Install git if not already installed
-if ! command -v git &> /dev/null; then
-    print_info "Git not found. Installing git..."
-    nix-env -iA nixos.git
-    print_success "Git installed"
-else
-    print_info "Git is already installed"
-fi
+print_info "Starting system configuration..."
 
 # Enable flakes permanently
 print_info "Enabling flakes in system configuration..."
@@ -179,26 +202,6 @@ if ! grep -q "experimental-features = \[ \"nix-command\" \"flakes\" \]" /etc/nix
 else
     print_info "Flakes already enabled"
 fi
-
-# Check if already installed
-if [ -d "$CONFIG_DIR" ]; then
-    print_error "NixOS configuration appears to be already installed at $CONFIG_DIR"
-    print_error "This installer is designed for fresh systems only."
-    print_info "If you want to reinstall, manually remove $CONFIG_DIR first (sudo rm -rf $CONFIG_DIR)."
-    exit 1
-fi
-
-# Create the directory with proper permissions
-print_info "Creating configuration directory..."
-sudo mkdir -p "$CONFIG_DIR"
-sudo chown root:wheel "$CONFIG_DIR"
-sudo chmod 775 "$CONFIG_DIR"
-print_success "Directory created with wheel group write access"
-
-# Clone repository
-print_info "Cloning repository to $CONFIG_DIR"
-git clone "$REPO_URL" "$CONFIG_DIR"
-print_success "Repository cloned"
 
 # Generate hardware-configuration.nix
 print_info "Generating hardware-configuration.nix for this system..."

@@ -2,8 +2,8 @@
 
 {
   imports = [
-    (self + /client/hardware-configuration.nix)
-    (self + /coresys/applications.nix)
+    ../../../client/hardware-configuration.nix
+    ../../../coresys/applications.nix
   ];
 
   # System settings from variables.nix

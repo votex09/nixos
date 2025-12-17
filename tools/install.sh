@@ -197,6 +197,7 @@ echo "  Timezone:              $TIMEZONE"
 echo "  Locale:                $LOCALE"
 echo "  Keyboard Layout:       $KB_LAYOUT"
 echo "  Auto-login:            $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
+echo "  VnixOS Path:           $CONFIG_DIR"
 echo ""
 
 echo -n "Continue with installation? (y/N): "

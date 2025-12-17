@@ -244,13 +244,14 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
 fi
 
 # Generate variables.nix by substituting values in the template
-sed -e "s/@USERNAME@/$USERNAME/g" \
-    -e "s/@HOSTNAME@/$HOSTNAME/g" \
-    -e "s/@TIMEZONE@/$TIMEZONE/g" \
-    -e "s/@LOCALE@/$LOCALE/g" \
-    -e "s/@KB_LAYOUT@/$KB_LAYOUT/g" \
-    -e "s/@DESKTOP_ENV@/$DESKTOP_ENV/g" \
-    -e "s/@AUTOLOGIN_VALUE@/$AUTOLOGIN_VALUE/g" \
+# Use | as delimiter instead of / to avoid conflicts with special characters
+sed -e "s|@USERNAME@|$USERNAME|g" \
+    -e "s|@HOSTNAME@|$HOSTNAME|g" \
+    -e "s|@TIMEZONE@|$TIMEZONE|g" \
+    -e "s|@LOCALE@|$LOCALE|g" \
+    -e "s|@KB_LAYOUT@|$KB_LAYOUT|g" \
+    -e "s|@DESKTOP_ENV@|$DESKTOP_ENV|g" \
+    -e "s|@AUTOLOGIN_VALUE@|$AUTOLOGIN_VALUE|g" \
     "$TEMPLATE_FILE" > "$CONFIG_DIR/client/variables.nix"
 print_success "Configuration generated at $CONFIG_DIR/client/variables.nix"
 

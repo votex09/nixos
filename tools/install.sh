@@ -268,7 +268,7 @@ fi
 print_info "Applying NixOS configuration..."
 print_warning "This may take several minutes..."
 
-if sudo nixos-rebuild switch --flake "$CONFIG_DIR#$CONFIGURATION"; then
+if sudo nixos-rebuild switch --flake "#$CONFIGURATION"; then
     echo ""
     print_success "Installation complete!"
     print_success "Your NixOS system has been configured and will reboot momentarily."

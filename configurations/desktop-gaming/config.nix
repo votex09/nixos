@@ -2,8 +2,8 @@
 
 {
   imports = [
-    ../../VnixOS/client/hardware-configuration.nix
-    ../../VnixOS/coresys/applications.nix
+    /nix/VnixOS/client/hardware-configuration.nix
+    /nix/VnixOS/coresys/applications.nix
   ];
 
   # System settings from variables.nix

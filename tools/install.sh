@@ -38,6 +38,19 @@ if [ ! -f /etc/NIXOS ]; then
     exit 1
 fi
 
+# Store the installer script path for cleanup
+INSTALLER_SCRIPT="$0"
+
+# Cleanup function to remove the installer script
+cleanup_installer() {
+    # Schedule deletion of the installer script in the background to avoid
+    # "text file busy" errors that occur when deleting a running script
+    (sleep 1 && rm -f "$INSTALLER_SCRIPT") &
+}
+
+# Set trap to cleanup on exit
+trap cleanup_installer EXIT
+
 print_info "VnixOS Flake Configuration Installer"
 echo ""
 

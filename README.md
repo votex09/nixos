@@ -1,6 +1,6 @@
-# NixOS GNOME Configuration
+# VnixOS - Modular NixOS Configuration
 
-A simple, modular NixOS configuration with GNOME desktop environment.
+A modular, flake-based NixOS configuration supporting multiple desktop environments (GNOME, KDE Plasma, Cosmic) with automated installation and multi-machine management.
 
 ## Quick Install
 
@@ -26,96 +26,146 @@ The installer will:
 
 1. Install git (if not already installed)
 2. Clone this repository to `/nix/VnixOS/`
-3. Auto-detect your timezone, locale, and keyboard layout
-4. Prompt for username and hostname
-5. Generate `hardware-configuration.nix` for your system
-6. Generate `configuration.nix` with your settings
-7. Rebuild your system and reboot
+3. Enable Nix flakes (if not already enabled)
+4. Prompt for:
+   - Username and hostname
+   - Configuration selection (desktop-gaming, etc.)
+   - Desktop environment (GNOME, KDE Plasma, or Cosmic)
+5. Auto-detect: timezone, locale, and keyboard layout
+6. Auto-login preference
+7. Generate `variables.nix` with your settings
+8. Generate `hardware-configuration.nix` for your system
+9. Validate flake configuration
+10. Apply NixOS configuration and reboot
 
 ## Features
 
-- **Desktop Environment**: GNOME with GDM display manager
+- **Multiple Desktop Environments**: Choose from GNOME, KDE Plasma, or Cosmic during installation
+- **Flake-based**: Modern Nix flakes for reproducible, declarative builds
+- **Auto-discovery**: Automatically discovers all configurations in `configurations/` directory
+- **Multi-machine**: Manage multiple machines from a single repository
 - **Audio**: PipeWire (modern audio server)
-- **Networking**: NetworkManager
+- **Networking**: NetworkManager for easy network management
 - **Bootloader**: systemd-boot with EFI support
-- **Flakes**: Enabled for reproducible builds
+- **Auto-detection**: Automatically detects timezone, locale, and keyboard layout
+- **Optional auto-login**: Configure automatic login during installation
 
-## Default Packages
+## Common Packages
 
-- Firefox
-- GNOME Tweaks
-- vim, wget, git
-- gnome-console
+All configurations include:
+- Firefox browser
+- git, vim, wget, curl
+- htop, neofetch
+- File manager utilities
 
 ## Directory Structure
 
 ```
 /nix/VnixOS/
-├── flake.nix                   # Flake configuration (auto-discovers hosts)
-├── flake.lock                  # Locked dependencies
-├── hosts/
-│   ├── desktop/                # Per-host configuration
-│   │   ├── configuration.nix
-│   │   └── hardware-configuration.nix
-│   ├── laptop/
-│   │   ├── configuration.nix
-│   │   └── hardware-configuration.nix
-│   └── ...
-├── applications/
-│   ├── core.nix               # Essential system packages (do not modify)
-│   └── user.nix               # User-defined custom packages (optional)
+├── flake.nix                           # Main flake configuration
+├── flake.lock                          # Locked dependencies
+├── client/                             # Generated files (per-installation)
+│   ├── variables.nix                   # User settings (generated)
+│   ├── hardware-configuration.nix      # Hardware config (generated)
+│   └── users.nix                       # User management (template)
+├── configurations/                     # Configuration profiles
+│   └── desktop-gaming/
+│       ├── config.nix                  # Main configuration
+│       └── applications/
+│           └── core.nix                # Desktop-specific packages
+├── coresys/                            # Core system modules
+│   ├── applications.nix                # Desktop environment selector
+│   └── desktop-environments/
+│       ├── gnome.nix                   # GNOME configuration
+│       ├── kde.nix                     # KDE Plasma configuration
+│       └── cosmic.nix                  # Cosmic DE configuration
 └── tools/
-    └── install.sh              # Installation script
+    ├── install.sh                      # Automated installer
+    └── templates/
+        ├── variables.nix               # Template for user settings
+        └── users.nix                   # Template for user management
 ```
 
-All files are git-tracked, allowing you to version control your system configuration. Each machine's configuration is kept separate in its own `hosts/HOSTNAME/` directory.
+All files are git-tracked, allowing you to version control your system configuration. Generated files in `client/` contain system-specific information.
 
 ## Making Changes
 
-After installation, edit files in your host directory and apply changes:
+After installation, edit your configuration and apply changes:
+
+### Modify System Configuration
+
+Edit your configuration file:
 
 ```bash
-# Edit your configuration (replace 'desktop' with your hostname)
-vim /nix/VnixOS/hosts/desktop/configuration.nix
+# Edit the main configuration
+vim /nix/VnixOS/configurations/desktop-gaming/config.nix
 
-# Apply changes
-sudo nixos-rebuild switch --flake /nix/VnixOS#desktop
+# Rebuild and apply changes
+sudo nixos-rebuild switch --flake /nix/VnixOS#desktop-gaming
 ```
+
+### Change Desktop Environment
+
+Edit the generated variables file to change your desktop environment:
+
+```bash
+# Edit variables (you can change desktopEnvironment to "gnome", "kde", or "cosmic")
+vim /nix/VnixOS/client/variables.nix
+
+# Rebuild with the new desktop environment
+sudo nixos-rebuild switch --flake /nix/VnixOS#desktop-gaming
+```
+
+### Add Custom Packages
+
+Edit the core applications module:
+
+```bash
+# Add packages to your configuration
+vim /nix/VnixOS/configurations/desktop-gaming/applications/core.nix
+
+# Rebuild to install new packages
+sudo nixos-rebuild switch --flake /nix/VnixOS#desktop-gaming
+```
+
+## Multiple Configurations
+
+The flake automatically discovers all configurations in the `configurations/` directory. To create a new configuration:
+
+1. Create a new directory: `mkdir -p /nix/VnixOS/configurations/my-config`
+2. Copy the structure from `desktop-gaming/`
+3. Customize `config.nix` for your needs
+4. Run: `sudo nixos-rebuild switch --flake /nix/VnixOS#my-config`
 
 ## Multiple Machines
 
-The flake automatically discovers all host configurations in the `hosts/` directory. To add a second machine:
+To use this configuration on multiple machines:
 
-1. Clone the repository on the second machine
-2. Run `./install.sh` again with a different hostname
-3. The installer creates a new host directory without overwriting existing configurations
-4. Both machines can be managed from the same repository
+1. Clone the repository on each machine
+2. Run `./install.sh` on each system (choose different hostnames)
+3. Each system will have its own `client/` directory
+4. Edit machine-specific configuration as needed
 
-You can rebuild either machine from any location:
-```bash
-# Rebuild desktop from laptop
-sudo nixos-rebuild switch --flake /path/to/VnixOS#desktop
+Each machine can be independently configured and rebuilt using its own hostname.
 
-# Rebuild laptop from desktop
-sudo nixos-rebuild switch --flake /path/to/VnixOS#laptop
-```
+## Desktop Environment Details
 
-## Customization
+### GNOME
+- Display Manager: GDM
+- Desktop Manager: GNOME
+- Includes: GNOME Tweaks, GNOME Console
+- Best for: User-friendly, feature-rich desktop
 
-**Host Configuration**: Edit `/nix/VnixOS/hosts/YOUR_HOSTNAME/configuration.nix` to:
-- Change desktop environment settings
-- Configure services
-- Add more users
-- Modify system-level settings
+### KDE Plasma
+- Display Manager: SDDM
+- Desktop Manager: KDE Plasma 5
+- Includes: Konsole, Dolphin, Kate, Plasma Add-ons
+- Best for: Customizable, powerful desktop environment
 
-**Core Packages**: `/nix/VnixOS/applications/core.nix`
-- Contains essential system packages (shared across all hosts)
-- Do not remove these unless you know what you're doing
-
-**Custom Packages**: Edit `/nix/VnixOS/applications/user.nix` to:
-- Add your personal applications (shared across all hosts)
-- Customize packages for your workflow
-- Safely modify without affecting core system
+### Cosmic
+- Display Manager: Cosmic Greeter
+- Desktop Manager: Cosmic DE
+- Best for: Modern, lightweight alternative
 
 ## Version Control
 
@@ -129,8 +179,23 @@ git commit -m "Updated configuration"
 
 You can also push to your own remote repository to back up your configuration.
 
+## Troubleshooting
+
+### Flake Not Found
+If you get an error about the flake not being found, ensure:
+- You're in the `/nix/VnixOS` directory
+- The configuration exists in `configurations/`
+- Run `nix flake check` to validate the flake
+
+### Desktop Environment Not Loading
+If the selected DE doesn't load:
+- Check that `/nix/VnixOS/client/variables.nix` has the correct `desktopEnvironment` value
+- Ensure the corresponding DE module exists in `coresys/desktop-environments/`
+- Run `nixos-rebuild switch --flake /nix/VnixOS#desktop-gaming` with verbose output for more details
+
 ## Requirements
 
 - NixOS system (fresh or existing)
 - Internet connection
-- Root/sudo access
+- sudo access (not required to run as root)
+- Nix with flakes support (enabled by installer)

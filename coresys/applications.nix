@@ -1,0 +1,96 @@
+{ config, pkgs, ... }:
+
+let
+  variables = import ../client/variables.nix;
+in
+
+{
+  # Desktop Environment selection
+  desktopEnvironments = {
+    gnome = {
+      enable = variables.desktopEnvironment == "gnome";
+      packages = with pkgs; [
+        gnome-tweaks
+        gnome-console
+      ];
+      config = {
+        services.xserver = {
+          enable = true;
+          desktopManager.gnome.enable = true;
+          displayManager.gdm.enable = true;
+        };
+        environment.gnome.excludePackages = with pkgs; [
+          gnome-photos
+          gnome-tour
+          gedit
+        ];
+        services.gnome.gnome-settings-daemon.enable = true;
+      };
+    };
+
+    kde = {
+      enable = variables.desktopEnvironment == "kde";
+      packages = with pkgs; [
+        kdePackages.plasma-desktop
+        kdePackages.kdeplasma-addons
+        kdePackages.konsole
+        kdePackages.dolphin
+        kdePackages.kate
+      ];
+      config = {
+        services.xserver = {
+          enable = true;
+          desktopManager.plasma5.enable = true;
+          displayManager.sddm.enable = true;
+        };
+      };
+    };
+
+    cosmic = {
+      enable = variables.desktopEnvironment == "cosmic";
+      packages = with pkgs; [
+        cosmic-desktop
+      ];
+      config = {
+        services.xserver = {
+          enable = true;
+        };
+      };
+    };
+  };
+
+  # Common packages across all DEs
+  environment.systemPackages = with pkgs; [
+    # Utilities
+    curl
+    wget
+    git
+    vim
+    htop
+    neofetch
+    file-roller
+    evince
+
+    # Browser
+    firefox
+  ] ++ (
+    if config.desktopEnvironments.gnome.enable then config.desktopEnvironments.gnome.packages
+    else if config.desktopEnvironments.kde.enable then config.desktopEnvironments.kde.packages
+    else if config.desktopEnvironments.cosmic.enable then config.desktopEnvironments.cosmic.packages
+    else [ ]
+  );
+
+  # Apply the selected DE configuration
+  imports = [
+    (
+      if variables.desktopEnvironment == "gnome" then
+        (import ./desktop-environments/gnome.nix)
+      else if variables.desktopEnvironment == "kde" then
+        (import ./desktop-environments/kde.nix)
+      else if variables.desktopEnvironment == "cosmic" then
+        (import ./desktop-environments/cosmic.nix)
+      else
+        (import ./desktop-environments/gnome.nix)  # Default to GNOME
+    )
+  ];
+}

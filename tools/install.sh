@@ -58,12 +58,54 @@ echo -n "Enter hostname for this system [$CURRENT_HOSTNAME]: "
 read HOSTNAME
 HOSTNAME=${HOSTNAME:-$CURRENT_HOSTNAME}
 
-# TODO: Get list of available configurations (read ./configurations for list and load it into a variable)
+# Get list of available configurations
+print_info "Available configurations:"
+CONFIGS=($(find ./configurations -maxdepth 1 -mindepth 1 -type d -exec basename {} \;))
+if [ ${#CONFIGS[@]} -eq 0 ]; then
+    print_error "No configurations found in ./configurations"
+    exit 1
+fi
 
-# Get user requested device configuration TODO: actually show the list to the user...
-echo -n "Enter name of the VnixOS configuration to apply: "
-read CONFIGURATION
-CONFIGURATION=${CONFIGURATION:-"default"}
+for i in "${!CONFIGS[@]}"; do
+    echo "  $((i+1)). ${CONFIGS[$i]}"
+done
+echo ""
+
+# Get user requested device configuration
+echo -n "Select configuration (1-${#CONFIGS[@]}) or enter custom name: "
+read CONFIG_INPUT
+CONFIG_INPUT=${CONFIG_INPUT:-1}
+
+# Check if input is a number
+if [[ "$CONFIG_INPUT" =~ ^[0-9]+$ ]]; then
+    if [ "$CONFIG_INPUT" -ge 1 ] && [ "$CONFIG_INPUT" -le ${#CONFIGS[@]} ]; then
+        CONFIGURATION=${CONFIGS[$((CONFIG_INPUT-1))]}
+    else
+        print_error "Invalid selection"
+        exit 1
+    fi
+else
+    CONFIGURATION=$CONFIG_INPUT
+fi
+
+# Desktop Environment selection
+print_info "Available desktop environments:"
+echo "  1. GNOME"
+echo "  2. KDE Plasma"
+echo "  3. Cosmic"
+echo ""
+echo -n "Select desktop environment (1-3) [1]: "
+read DE_INPUT
+DE_INPUT=${DE_INPUT:-1}
+
+case $DE_INPUT in
+  1) DESKTOP_ENV="gnome" ;;
+  2) DESKTOP_ENV="kde" ;;
+  3) DESKTOP_ENV="cosmic" ;;
+  *) print_error "Invalid selection"; exit 1 ;;
+esac
+print_info "Selected desktop environment: $DESKTOP_ENV"
+echo ""
 
 # Auto-detect timezone
 TIMEZONE=$(timedatectl show -p Timezone --value 2>/dev/null || echo "America/New_York")
@@ -90,13 +132,14 @@ AUTOLOGIN=${AUTOLOGIN,,}  # Convert to lowercase
 
 echo ""
 print_info "Configuration Summary:"
-echo "  Username:        $USERNAME"
-echo "  Hostname:        $HOSTNAME"
-echo "  Config:          $CONFIGURATION"
-echo "  Timezone:        $TIMEZONE"
-echo "  Locale:          $LOCALE"
-echo "  Keyboard Layout: $KB_LAYOUT"
-echo "  Auto-login:      $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
+echo "  Username:              $USERNAME"
+echo "  Hostname:              $HOSTNAME"
+echo "  Config:                $CONFIGURATION"
+echo "  Desktop Environment:   $DESKTOP_ENV"
+echo "  Timezone:              $TIMEZONE"
+echo "  Locale:                $LOCALE"
+echo "  Keyboard Layout:       $KB_LAYOUT"
+echo "  Auto-login:            $([ "$AUTOLOGIN" = "y" ] && echo "Yes" || echo "No")"
 echo ""
 
 echo -n "Continue with installation? (y/N): "
@@ -164,7 +207,29 @@ print_success "Hardware configuration generated"
 
 # Generate variables.nix with user values
 print_info "Generating variables.nix with user-specific values..."
-# TODO: Generate the file using the template: ./tools/templates/variables.nix
+AUTOLOGIN_VALUE="false"
+if [ "$AUTOLOGIN" = "y" ]; then
+    AUTOLOGIN_VALUE="true"
+fi
+
+# Get the script directory to find the template
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE_FILE="$SCRIPT_DIR/templates/variables.nix"
+
+if [ ! -f "$TEMPLATE_FILE" ]; then
+    print_error "Template file not found: $TEMPLATE_FILE"
+    exit 1
+fi
+
+# Generate variables.nix by substituting values in the template
+sed -e "s/@USERNAME@/$USERNAME/g" \
+    -e "s/@HOSTNAME@/$HOSTNAME/g" \
+    -e "s/@TIMEZONE@/$TIMEZONE/g" \
+    -e "s/@LOCALE@/$LOCALE/g" \
+    -e "s/@KB_LAYOUT@/$KB_LAYOUT/g" \
+    -e "s/@DESKTOP_ENV@/$DESKTOP_ENV/g" \
+    -e "s/@AUTOLOGIN_VALUE@/$AUTOLOGIN_VALUE/g" \
+    "$TEMPLATE_FILE" > "$CONFIG_DIR/client/variables.nix"
 print_success "Configuration generated at $CONFIG_DIR/client/variables.nix"
 
 # Test the flake configuration

@@ -258,7 +258,7 @@ print_success "Configuration generated at $CONFIG_DIR/client/variables.nix"
 # Test the flake configuration
 print_info "Testing flake configuration..."
 cd "$CONFIG_DIR"
-if nix flake check 2>/dev/null; then
+if nix flake check; then
     print_success "Flake configuration is valid"
 else
     print_warning "Flake check had warnings (this is usually okay)"

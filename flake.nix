@@ -20,8 +20,8 @@
       getConfigs = attrsets.filterAttrs (name: type: type == "directory") configDirs;
 
       # Read variables from the client directory if they exist
-      variablesPath = ./client/variables.nix;
-      variables = if builtins.pathExists variablesPath then import variablesPath else {};
+      variables = let result = builtins.tryEval (import ./client/variables.nix);
+                  in if result.success then result.value else {};
     in
     {
       nixosConfigurations = mapAttrs (configName: _:
